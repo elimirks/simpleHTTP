@@ -1,4 +1,5 @@
-Welcome. This is a very simple HTTP server written in perl... it is barely usable right now, but I will update it soon...
+Welcome. This is a very simple HTTP server written in perl.
+The functionality is usable, but does not support preprocessing as well as some other important features.
 
 In case you want to use this...
 
