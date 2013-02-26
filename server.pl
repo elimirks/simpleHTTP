@@ -4,11 +4,10 @@ use threads;
 use IO::Socket;
 
 my $sock = new IO::Socket::INET (
-	LocalHost => "208.68.36.163",
 	LocalPort => "80",
-	Proto => "tcp",
-	Listen => 1,
-	Reuse => 1,
+	Proto     => "tcp",
+	Listen    => 1,
+	Reuse     => 1,
 );
 die "Could not establish socket: $!\n" unless $sock;
 
@@ -50,5 +49,6 @@ while (1) {
 	threads->create('http_thread', $sock->accept());
 }
 
+# This should be moved somewhere... it will never be reached :)
 close($sock);
 
