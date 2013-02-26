@@ -15,22 +15,20 @@ die "Could not establish socket: $!\n" unless $sock;
 sub http_thread {
 	$consock = @_[0];
 	
-	# Parse the request
+	# Parse the request -- Just the path for now.
 	$request = <$consock>;
-	$request =~ s/\w+\s([\w\.\/]*)\s.*/\1/g;
+	$request =~ s/\w+\s([\w\.\/]*)\s.*/\1/;
 	
 	# Strip out '../' -- Bad solution, it should be checking if the path is in the http directory instead... that would be good.
 	$request =~ s/\.\.\///g;
+
+	# Cut out the newline in the request. # In the future, this should be done in the regex.
+	$request = substr($request, 0, -1);
 	
-	# Cut out the newline from the request.
-	$request = substr($request, 0, length($request) - 1);
-	$filepath = "http";
+	$filepath = "http" . $request;
 	
-	if ($request eq "/") {
-		$filepath .= "/index.html";
-	} else {
-		$filepath .= $request;
-	}
+	# If a directory is requested, give back index.html in that directory.
+	$request =~ /\/$/ and $filepath .= "index.html";
 	
 	print "Requesting " . $filepath . "\n";
 	
@@ -38,7 +36,7 @@ sub http_thread {
 	open(FILE, $filepath) or print "Failed to open " . $filepath . "\n";
 	$filedata = <FILE>;
 	
-	# The newline is to terminate the print statement -- this is needed for binary data
+	# The newline is to terminate files (some don't have a termination character, such as image files.)
 	print $consock $filedata . "\n";
 	close($consock);
 	close(FILE);
