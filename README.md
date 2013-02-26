@@ -12,6 +12,8 @@ TODO:
 - Add HTTP header support.
 - Add support for preprocessors.
 - Add configuration file support (base http directory, preprocessor matching..)
+- Scan the requested directory for index.???
+ - In the config, the exact extentions should be specified.
 
 PARTIALLY DONE:
 
