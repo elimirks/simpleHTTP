@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
+use threads;
 use IO::Socket;
+
 my $sock = new IO::Socket::INET (
 	LocalHost => "208.68.36.163",
 	LocalPort => "80",
@@ -10,16 +12,16 @@ my $sock = new IO::Socket::INET (
 );
 die "Could not establish socket: $!\n" unless $sock;
 
-my $consock;
-
-print "Welcome to the server.\n";
-
-while (1) {
-	$consock = $sock->accept();
+# Main http method thread.
+sub http_thread {
+	$consock = @_[0];
 	
 	# Parse the request
 	$request = <$consock>;
 	$request =~ s/\w+\s([\w\.\/]*)\s.*/\1/g;
+	
+	# Strip out '../' -- Bad solution, it should be checking if the path is in the http directory instead... that would be good.
+	$request =~ s/\.\.\///g;
 	
 	# Cut out the newline from the request.
 	$request = substr($request, 0, length($request) - 1);
@@ -33,16 +35,19 @@ while (1) {
 	
 	print "Requesting " . $filepath . "\n";
 	
-	# TODO get this to work with binary data>
-	# TODO this needs to send response headers!
-	
 	local $/;
-	open(FILE, $filepath) or print "Failed to open " . $filepath;
+	open(FILE, $filepath) or print "Failed to open " . $filepath . "\n";
 	$filedata = <FILE>;
 	
-	print $consock <FILE>;
+	# The newline is to terminate the print statement -- this is needed for binary data
+	print $consock $filedata . "\n";
 	close($consock);
 	close(FILE);
+}
+
+# Keep openning sockets for clients.
+while (1) {
+	threads->create('http_thread', $sock->accept());
 }
 
 close($sock);
