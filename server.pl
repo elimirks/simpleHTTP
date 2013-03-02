@@ -32,14 +32,36 @@ sub http_thread {
 	
 	print "Requesting " . $filepath . "\n";
 	
-	local $/;
-	open(FILE, $filepath) or print "Failed to open " . $filepath . "\n";
-	$filedata = <FILE>;
-	
-	# The newline is to terminate files (some don't have a termination character, such as image files.)
-	print $consock $filedata . "\n";
+	# Execute perl files and output the result.
+	if ($filepath =~ /\.pl$/) {
+		# Only try to execute the file if it could be opened.
+		if (open(FILE, $filepath) and close(FILE)) {
+			# Capture all print statements.
+			my $capture; {
+				open my $capture_handle, ">", \$capture or die $!;
+				my $saved_handle = select $capture_handle;
+				# Execute everything in the file -- all print statements will be captured and sent as the response.
+				require $filepath;
+				select $saved_handle;
+			}
+			print $consock $capture . "\n";
+		# else # return a 404
+		}
+	# If it is not a perl file, just return the file data.
+	} else {
+		local $/;
+		open(FILE, $filepath) or print "Failed to open " . $filepath . "\n";
+		$filedata = <FILE>;
+		
+		# The newline is to terminate files (some don't have a termination character, such as image files.)
+		print $consock $filedata . "\n";
+		close(FILE);
+	}
 	close($consock);
-	close(FILE);
+}
+
+sub test_routine() {
+	print "foo";
 }
 
 # Keep openning sockets for clients.

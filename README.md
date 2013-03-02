@@ -4,16 +4,28 @@ The functionality is usable, but does not support preprocessing as well as some 
 In case you want to use this...
 
 1. Create a directory called 'http' which is a sibling to the server.pl file.
-2. Add files (images work now!), html, etc... no preprocessing yet.
+2. Add files -- html, images, perl files...
 3. Run server.pl as root, and test out your brand new HTTP server :)
+
+Only perl will be allowed to run with this server.
+This will help the execution be super fast.
+
+Perl processing usage:
+
+All print statements will direct to the response.
+
+Example:
+
+-- index.pl --
+$somevar = "value";
+print "<html><head></head><body>$somevar</body></html>";
+-- EOF --
 
 TODO:
 
 - Add HTTP header support.
-- Add support for preprocessors.
-- Add configuration file support (base http directory, preprocessor matching..)
-- Scan the requested directory for index.???
- - In the config, the exact extentions should be specified.
+- Scan the requested directory for index\.(htm?l)|(pl)
+- Syntax error handling for returning perl files.
 
 PARTIALLY DONE:
 
@@ -24,4 +36,5 @@ DONE:
 
 - Multithread sockets.
  - Currently there is only one thread to send the data... This could get clogged easily.
+- Add support for preprocessors.
 
