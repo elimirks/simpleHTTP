@@ -11,6 +11,12 @@ my $sock = new IO::Socket::INET (
 );
 die "Could not establish socket: $!\n" unless $sock;
 
+# TODO for the different types of preprocessing, have a bunch of stubs in external files that could be loaded depending on the config!
+
+my %config = (
+	"HTTP_PATH"=>"http"
+);
+
 # Main http method thread.
 sub http_thread {
 	$consock = @_[0];
@@ -25,7 +31,7 @@ sub http_thread {
 	# Cut out the newline in the request. # In the future, this should be done in the regex.
 	$request = substr($request, 0, -1);
 	
-	$filepath = "http" . $request;
+	$filepath = $config{"HTTP_PATH"} . $request;
 	
 	# If a directory is requested, give back index.html in that directory.
 	$request =~ /\/$/ and $filepath .= "index.html";
@@ -60,13 +66,9 @@ sub http_thread {
 	close($consock);
 }
 
-sub test_routine() {
-	print "foo";
-}
-
 # Keep openning sockets for clients.
 while (1) {
-	threads->create('http_thread', $sock->accept());
+	threads->create(\&http_thread, $sock->accept())->detach();
 }
 
 # This should be moved somewhere... it will never be reached :)
