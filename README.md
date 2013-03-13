@@ -7,25 +7,22 @@ In case you want to use this...
 2. Add files -- html, images, perl files...
 3. Run server.pl as root, and test out your brand new HTTP server :)
 
-Only perl will be allowed to run with this server.
-This will help the execution be super fast.
+Initially I was thinking about only letting perl be run with the server, but I thought of a new model of the server to allow modularity and ability to easily add new language support.
 
 Perl processing usage:
 
 All print statements will direct to the response.
 
-Example:
+In the perl file, you could access the %GET hash for GET params.
 
--- index.pl --
-$somevar = "value";
-print "<html><head></head><body>$somevar</body></html>";
--- EOF --
+
 
 TODO:
 
 - Add HTTP header support.
 - Scan the requested directory for index\.(htm?l)|(pl)
 - Syntax error handling for returning perl files.
+- Parse form POST variables.
 
 PARTIALLY DONE:
 
@@ -37,4 +34,5 @@ DONE:
 - Multithread sockets.
  - Currently there is only one thread to send the data... This could get clogged easily.
 - Add support for preprocessors.
+- Parse GET variables.
 
