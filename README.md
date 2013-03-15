@@ -15,7 +15,11 @@ All print statements will direct to the response.
 
 In the perl file, you could access the %GET hash for GET params.
 
+FUNFAX:
 
+I just found out that this server is insusceptible to slowloris attacks :)
+This is because the only HTTP header that the server cares about is the first (URL, GET params, etc)
+It will terminate after getting this header, so slowloris does not cause DOS.
 
 TODO:
 
