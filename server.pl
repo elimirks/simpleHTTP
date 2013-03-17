@@ -31,15 +31,14 @@ sub get_filedata {
 			my $saved_handle = select $capture_handle;
 			
 			# Execute everything in the file -- all print statements will be captured and sent as the response.
-			require $filepath;
+			do $filepath or print "\nFatal error: $@\n";
 			select $saved_handle;
 		}
 		return $capture . "\n";
 	# Plain file type
 	} else {
-		local $/;
 		open(FILE, $filepath) or print "Failed to open " . $filepath . "\n";
-		$filedata = <FILE> and close(FILE);
+		local $/ and $filedata = <FILE> and close(FILE);
 		
 		# The newline is to terminate files (some don't have a termination character, such as image files.)
 		return $filedata . "\n";
@@ -48,7 +47,7 @@ sub get_filedata {
 
 # Main http method thread.
 sub http_thread {
-	$consock = @_[0];
+	$consock = $_[0];
 	$request = <$consock>;
 	
 	# Parse the request -- Just the path for now.
@@ -63,12 +62,12 @@ sub http_thread {
 	$path =~ /\/$/ and $filepath .= "index.html";
 	
 	if (-r $filepath) {
-		print "Requesting: $filepath \n";
+		print "Requesting: $filepath\n";
 		
 		# Create a hash to store the get params -- this passes on to the perl files.
-		our %GET;
-		$GET{$1} = $2 while $paramstr =~ /[\?\&]([^=]+)=([^&]+)/g;
+		our %GET and $GET{$1} = $2 while $paramstr =~ /[\?\&]([^=]+)=([^&]+)/g;
 		
+		# Get information.
 		print $consock get_filedata($filepath);
 	# Return 404
 	} else {

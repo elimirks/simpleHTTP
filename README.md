@@ -25,7 +25,6 @@ TODO:
 
 - Add HTTP header support.
 - Scan the requested directory for index\.(htm?l)|(pl)
-- Syntax error handling for returning perl files.
 - Parse form POST variables.
 
 PARTIALLY DONE:
@@ -35,6 +34,7 @@ PARTIALLY DONE:
 
 DONE:
 
+- Syntax error handling for returning perl files.
 - Multithread sockets.
  - Currently there is only one thread to send the data... This could get clogged easily.
 - Add support for preprocessors.
