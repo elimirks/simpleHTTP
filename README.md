@@ -24,13 +24,17 @@ It will terminate after getting this header, so slowloris does not cause DOS.
 TODO:
 
 - Add HTTP header support.
-- Scan the requested directory for index\.(htm?l)|(pl)
+ - It should return a few headers such as file type, size, etc.
 - Parse form POST variables.
+- Allow large streams from perl files.
+ - Assume we have a perl file that will act as an image loader.
 
 PARTIALLY DONE:
 
 - Block the usage of '../'.
  - Hacked up some regex.. bad solution, but it works for now.
+- Scan the requested directory for index\.(htm?l)|(pl)
+ - There is a default directory file for now. It might stay this way.
 
 DONE:
 
@@ -39,4 +43,6 @@ DONE:
  - Currently there is only one thread to send the data... This could get clogged easily.
 - Add support for preprocessors.
 - Parse GET variables.
+- Allow sending large files, such as executables.
+ - Stream the output instead of loading it all at once.
 

@@ -1,27 +1,27 @@
 #!/usr/bin/perl
 
+use strict;
 use threads;
 use IO::Socket;
 
-my $sock = new IO::Socket::INET (
+my $sock = new IO::Socket::INET(
 	LocalPort => "80",
 	Proto     => "tcp",
 	Listen    => 1,
 	Reuse     => 1,
-);
-die "Could not establish socket: $!\n" unless $sock;
+) or die "Could not establish socket: $!\n";
 
-# TODO Load this from a config file.
 my %config = (
 	"HTTP_PATH"      =>"http/",
-	"ERROR_REDIRECTS"=> {
+	"ERROR_REDIRECTS"=>{
 		"404"=>"404.html"
-	}
+	},
+	"DEFAULT_DIR_FILE"=>"index.html"
 );
 
 # Returns file data, or executes if the file is a perl file. Assumes that the file is readable.
-sub get_filedata {
-	$filepath = @_[0];
+sub stream_filedata {
+	my ($filepath, $consock) = @_;
 	
 	# Execute the file
 	if ($filepath =~ /\.pl$/) {
@@ -30,48 +30,49 @@ sub get_filedata {
 			open my $capture_handle, ">", \$capture or die $!;
 			my $saved_handle = select $capture_handle;
 			
-			# Execute everything in the file -- all print statements will be captured and sent as the response.
-			do $filepath or print "\nFatal error: $@\n";
+			# Execute the file. Error messages will be sent instead, if applicable.
+			do $filepath or print "Fatal error:\n$@\n";
 			select $saved_handle;
 		}
-		return $capture . "\n";
+		print $consock $capture . "\n" and return;
 	# Plain file type
 	} else {
-		open(FILE, $filepath) or print "Failed to open " . $filepath . "\n";
-		local $/ and $filedata = <FILE> and close(FILE);
-		
+		open(FILE, $filepath) or die "Failed to open $filepath\n";
+		print $consock $_ while <FILE>; # Stream output
+		close(FILE);
 		# The newline is to terminate files (some don't have a termination character, such as image files.)
-		return $filedata . "\n";
+		print $consock "\n" and return;
 	}
 }
 
 # Main http method thread.
 sub http_thread {
-	$consock = $_[0];
-	$request = <$consock>;
+	my $consock = $_[0];
+	my $request = <$consock> or die "Could not read headers from: " . $consock->peerhost;
 	
 	# Parse the request -- Just the path for now.
-	($reqtype, $path, $paramstr, $httptype) = $request =~ /(\w+)\s([\w\.\/]+)(\s|\?[\w\=\&]+)(.*)/;
+	my ($reqtype, $path, $paramstr, $httptype) = $request =~ /(\w+)\s([\w\.\/]+)(\s|\?[\w\=\&]+)(.*)/;
 	
-	# Strip out '../' -- Bad solution, it should be checking if the path is in the http directory instead... that would be good.
+	# Strip out '../' -- Bad solution, it should be checking if the path is in the http directory instead...
 	$path =~ s/\.\.\///g;
 	
-	$filepath = $config{"HTTP_PATH"} . $path;
+	my $filepath = $config{"HTTP_PATH"} . $path;
 	
-	# If a directory is requested, give back index.html in that directory.
-	$path =~ /\/$/ and $filepath .= "index.html";
+	# If a directory is requested, give back default directory index for that directory.
+	$path =~ /\/$/ and $filepath .= $config{"DEFAULT_DIR_FILE"};
 	
-	if (-r $filepath) {
-		print "Requesting: $filepath\n";
+	print "Requesting: $filepath\n";
 		
+	if (-r $filepath) {
 		# Create a hash to store the get params -- this passes on to the perl files.
-		our %GET and $GET{$1} = $2 while $paramstr =~ /[\?\&]([^=]+)=([^&]+)/g;
+		our %GET;
+		$GET{$1} = $2 while $paramstr =~ /[\?\&]([^=]+)=([^&]+)/g;
 		
 		# Get information.
-		print $consock get_filedata($filepath);
+		stream_filedata($filepath, $consock);
 	# Return 404
 	} else {
-		print $consock get_filedata($config{"HTTP_PATH"} . $config{"ERROR_REDIRECTS"}{"404"});
+		stream_filedata($config{"HTTP_PATH"} . $config{"ERROR_REDIRECTS"}{"404"}, $consock);
 	}
 	close($consock);
 }
