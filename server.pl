@@ -19,7 +19,8 @@ my %config = (
 	"DEFAULT_DIR_FILE"=>"index.html"
 );
 
-# Returns file data, or executes if the file is a perl file. Assumes that the file is readable.
+# Returns file data, or executes if the file is a perl file.
+# Assumes that the file is readable.
 sub stream_filedata {
 	my ($filepath, $consock) = @_;
 	
@@ -40,7 +41,8 @@ sub stream_filedata {
 		open(FILE, $filepath) or die "Failed to open $filepath\n";
 		print $consock $_ while <FILE>; # Stream output
 		close(FILE);
-		# The newline is to terminate files (some don't have a termination character, such as image files.)
+		# The newline is to terminate files
+		# (some don't have a termination character, such as image files.)
 		print $consock "\n" and return;
 	}
 }
@@ -48,21 +50,26 @@ sub stream_filedata {
 # Main http method thread.
 sub http_thread {
 	my $consock = $_[0];
-	my $request = <$consock> or die "Could not read headers from: " . $consock->peerhost;
+	my $request = <$consock> or
+		die "Could not read headers from: " . $consock->peerhost;
 	
+	# TODO parse this nicely??
 	# Parse the request -- Just the path for now.
-	my ($reqtype, $path, $paramstr, $httptype) = $request =~ /(\w+)\s([\w\.\/]+)(\s|\?[\w\=\&]+)(.*)/;
+	my ($reqtype, $path, $paramstr, $httptype) =
+		$request =~ /(\w+)\s([\w\.\/]+)(\s|\?[\w\=\&]+)(.*)/;
 	
-	# Strip out '../' -- Bad solution, it should be checking if the path is in the http directory instead...
+	# Strip out '../' -- Bad solution, it should be checking if the
+	# path is in the http directory instead...
 	$path =~ s/\.\.\///g;
 	
 	my $filepath = $config{"HTTP_PATH"} . $path;
 	
-	# If a directory is requested, give back default directory index for that directory.
+	# If a directory is requested, give back
+	# default directory index for that directory.
 	$path =~ /\/$/ and $filepath .= $config{"DEFAULT_DIR_FILE"};
 	
 	print "Requesting: $filepath\n";
-		
+	
 	if (-r $filepath) {
 		# Create a hash to store the get params -- this passes on to the perl files.
 		our %GET;
@@ -72,7 +79,8 @@ sub http_thread {
 		stream_filedata($filepath, $consock);
 	# Return 404
 	} else {
-		stream_filedata($config{"HTTP_PATH"} . $config{"ERROR_REDIRECTS"}{"404"}, $consock);
+		my $file_path = $config{"HTTP_PATH"} . $config{"ERROR_REDIRECTS"}{"404"};
+		stream_filedata($file_path, $consock);
 	}
 	close($consock);
 }
